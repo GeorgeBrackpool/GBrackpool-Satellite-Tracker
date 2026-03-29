@@ -24,12 +24,13 @@ scene.add( sphere );
 
 camera.position.z = 5;
 
-function animate( time ) {
-  renderer.render( scene, camera );
-  sphere.rotation.x = time / 10000;
-  sphere.rotation.y = time / 5000;
-}
-renderer.setAnimationLoop( animate );
+const satGeometry = new THREE.SphereGeometry(0.05, 16, 8);
+const satMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+const satelliteMesh = new THREE.Mesh(satGeometry, satMaterial);
+
+scene.add(satelliteMesh);
+
+
 
 // ISS OMM
 /*const omm = [{
@@ -46,9 +47,43 @@ const satrec = twoline2satrec(tleLine1, tleLine2);
 
 const positionAndVelocity = satellite.propagate(satrec, new Date());
 //Convert to latitude and Longitude
+const gmst = satellite.gstime(new Date());
 
+const eciGeo = satellite.eciToGeodetic(
+  positionAndVelocity.position, gmst
+);
 // Convert to radians
-
+const lat = eciGeo.latitude;
+const lon = eciGeo.longitude;
+const height = eciGeo.height;
 // Convert to earth sphere object. 
+const earthRadius = 3;
+
+const x = earthRadius * Math.cos(lat) * Math.cos(lon);
+const y = earthRadius * Math.sin(lat);
+const z = earthRadius * Math.cos(lat) * Math.sin(lon);
 
 // Update frames
+function animate( time ) {
+  sphere.rotation.x = time / 10000;
+  sphere.rotation.y = time / 5000;
+
+  const now = new Date();
+  const pos = satellite.propagate(satrec, now);
+
+  if (pos.position) {
+    const gmst = satellite.gstime(now);
+    const geo = satellite.eciToGeodetic(pos.position, gmst);
+
+    const lat = geo.latitude;
+    const lon = geo.longitude;
+
+    satelliteMesh.position.set(
+      earthRadius * Math.cos(lat) * Math.cos(lon),
+      earthRadius * Math.sin(lat),
+      earthRadius * Math.cos(lat) * Math.sin(lon)
+    );
+  }
+    renderer.render( scene, camera );
+}
+renderer.setAnimationLoop( animate );
