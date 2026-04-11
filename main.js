@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import * as satellite from 'satellite.js';
 import { json2satrec } from 'satellite.js';
 import { twoline2satrec } from 'satellite.js';
+import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { propagate, SatRecError } from 'satellite.js';
 import { gstime,degreesToRadians,radiansToDegrees,degreesLong,degreesLat,eciToGeodetic } from 'satellite.js';
 // npx vite to run.
@@ -14,14 +15,68 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
+// Load Orbit Controls (Camera Movement)
+const controls = new OrbitControls( camera, renderer.domElement );
+// controls.update() must be called after any manual changes to the camera's transform
+camera.position.set( 0, 20, 100 );
+controls.update();
+
 // Using three.js to render the earth and add it to the scene.
+const earthGroup = new THREE.Group();
+// Earth's axial tilt. Converting degrees to radian for 3js means Pi is divided by 180 as full circle is 2Pi. 180 is pi.
+earthGroup.rotation.z = -23.4 * Math.PI / 180;
+scene.add(earthGroup);
 const loader = new THREE.TextureLoader();
-const texture = loader.load( 'images/earth_texture.jpg' );
+const texture = loader.load( 'images/earthmap1k.jpg' );
 texture.colorSpace = THREE.SRGBColorSpace;
-const geometry = new THREE.SphereGeometry( 1, 32, 16);
+const geometry = new THREE.IcosahedronGeometry( 1, 12);
 const material = new THREE.MeshBasicMaterial( { map: texture,} );
-const sphere = new THREE.Mesh( geometry, material );
-scene.add( sphere );
+const sphereMesh = new THREE.Mesh( geometry, material );
+earthGroup.add(sphereMesh);
+
+// Lighting for earth
+
+
+// Creating a Starfield
+// Number of stars
+const starCount = 5000;
+
+// Geometry, buffer geometry is best for for lots of objects like this.
+const starGeometry = new THREE.BufferGeometry();
+const positions = [];
+
+for (let i = 0; i < starCount; i++) {
+    const radius = 500 + Math.random() * 500; // hollow shell
+    // Use these values to pick random directions for the stars, theta is rotation around, phy is up/down.
+    const theta = Math.random() * 2 * Math.PI;
+    const phi = Math.acos((Math.random() * 2) - 1);
+    // Convert the values for radius and direction to co-ordinates
+    const x = radius * Math.sin(phi) * Math.cos(theta);
+    const y = radius * Math.sin(phi) * Math.sin(theta);
+    const z = radius * Math.cos(phi);
+    // Add the co-ordinates to the array
+    positions.push(x, y, z);
+}
+// every 3 numbers = a star position
+starGeometry.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(positions, 3)
+);
+
+// Stars Material
+const starMaterial = new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 1.5,
+    sizeAttenuation: true
+});
+
+// Points object for starfield, render stars as points
+const stars = new THREE.Points(starGeometry, starMaterial);
+// Slight rotation to stars
+stars.rotation.y += 0.0001;
+scene.add(stars);
+
+
 
 // Moves camera position so we can view the planet.
 camera.position.z = 5;
@@ -74,8 +129,8 @@ scene.add(line);
 
 // Update frames, three js animations
 function animate( time ) {
-  sphere.rotation.x = time / 10000;
-  sphere.rotation.y = time / 5000;
+  //sphere.rotation.x = time / 10000;
+  sphereMesh.rotation.y = time / 8000;
 
   const now = new Date();
   const pos = satellite.propagate(satrec, now);
