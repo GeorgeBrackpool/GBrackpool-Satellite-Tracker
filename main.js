@@ -3,6 +3,7 @@ import * as satellite from 'satellite.js';
 import { json2satrec } from 'satellite.js';
 import { twoline2satrec } from 'satellite.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import { getFresnelMat } from './getFresnalMat.js';
 import { propagate, SatRecError } from 'satellite.js';
 import { gstime,degreesToRadians,radiansToDegrees,degreesLong,degreesLat,eciToGeodetic } from 'satellite.js';
 // npx vite to run.
@@ -10,15 +11,18 @@ import { gstime,degreesToRadians,radiansToDegrees,degreesLong,degreesLat,eciToGe
 // Load scene and camera
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+// Moves camera position so we can view the planet.
+camera.position.z = 5;
 // WebGL rendering
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
 // Load Orbit Controls (Camera Movement)
 const controls = new OrbitControls( camera, renderer.domElement );
 // controls.update() must be called after any manual changes to the camera's transform
-camera.position.set( 0, 20, 100 );
 controls.update();
 
 // Using three.js to render the earth and add it to the scene.
@@ -26,15 +30,37 @@ const earthGroup = new THREE.Group();
 // Earth's axial tilt. Converting degrees to radian for 3js means Pi is divided by 180 as full circle is 2Pi. 180 is pi.
 earthGroup.rotation.z = -23.4 * Math.PI / 180;
 scene.add(earthGroup);
+// Earth Material, Mesh and Texture
 const loader = new THREE.TextureLoader();
 const texture = loader.load( 'images/earthmap1k.jpg' );
 texture.colorSpace = THREE.SRGBColorSpace;
 const geometry = new THREE.IcosahedronGeometry( 1, 12);
-const material = new THREE.MeshBasicMaterial( { map: texture,} );
+const material = new THREE.MeshStandardMaterial( { map: texture,} );
 const sphereMesh = new THREE.Mesh( geometry, material );
 earthGroup.add(sphereMesh);
 
-// Lighting for earth
+// Light mesh and mat for dark side of earth
+const earthLightMat = new THREE.MeshBasicMaterial({
+  map: loader.load('images/earthlights1k.jpg'), blending: THREE.AdditiveBlending,
+})
+const earthLightsMesh = new THREE.Mesh(geometry, earthLightMat);
+earthGroup.add(earthLightsMesh);
+
+// Mesh and Mat for Clouds on earth
+const earthCloudMat = new THREE.MeshStandardMaterial({
+  map: loader.load('./images/earthcloudmap.jpg'), transparent: true,
+  opacity: 0.5,
+  blending: THREE.AdditiveBlending,
+})
+const earthCloudMesh = new THREE.Mesh(geometry, earthCloudMat);
+earthCloudMesh.scale.setScalar(1.003);
+earthGroup.add(earthCloudMesh);
+
+// Fresnal Shader for a blue glow around Earth. See getFresnalMat.js.
+const fresnalMat = getFresnelMat();
+const fresnalMesh = new THREE.Mesh(geometry, fresnalMat);
+fresnalMesh.scale.setScalar(1.02);
+earthGroup.add(fresnalMesh);
 
 
 // Creating a Starfield
@@ -75,11 +101,6 @@ const stars = new THREE.Points(starGeometry, starMaterial);
 // Slight rotation to stars
 stars.rotation.y += 0.0001;
 scene.add(stars);
-
-
-
-// Moves camera position so we can view the planet.
-camera.position.z = 5;
 
 // 3js Rendering of the satellite
 const satGeometry = new THREE.SphereGeometry(0.05, 16, 8);
@@ -126,11 +147,18 @@ const line = new THREE.Line(lineGeometry, material);
 scene.add(line);
 
 
+// Lighting for earth
+const sunLighting = new THREE.DirectionalLight(0xffffff, 2);
+sunLighting.position.set(-2,0.5,2);
+scene.add(sunLighting);
+
 
 // Update frames, three js animations
 function animate( time ) {
-  //sphere.rotation.x = time / 10000;
   sphereMesh.rotation.y = time / 8000;
+  earthLightsMesh.rotation.y = time / 8000;
+  earthCloudMesh.rotation.y = time/ 4000;
+  fresnalMesh.rotation.y = time / 4000;
 
   const now = new Date();
   const pos = satellite.propagate(satrec, now);
@@ -152,3 +180,10 @@ function animate( time ) {
     renderer.render( scene, camera );
 }
 renderer.setAnimationLoop( animate );
+
+function handleWindowResize () {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+window.addEventListener('resize', handleWindowResize, false);
