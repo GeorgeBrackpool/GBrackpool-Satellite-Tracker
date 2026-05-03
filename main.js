@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import * as satellite from 'satellite.js';
-import { json2satrec } from 'satellite.js';
 import { twoline2satrec } from 'satellite.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { getFresnelMat } from './getFresnalMat.js';
@@ -109,41 +108,47 @@ const satelliteMesh = new THREE.Mesh(satGeometry, satMaterial);
 scene.add(satelliteMesh);
 
 
-//Two-Line Element Set (TLE) of the ISS (Zarya). First line contains satellite identifiers, the following two contain actual parameters of its orbit.
-const tleLine1 = '1 25544U 98067A   26090.52027159  .00011565  00000+0  22010-3 0  9993'
-const tleLine2 = '2 25544  51.6339 324.4353 0006210 255.4271 104.6029 15.48680190559719'
-// This takes the TLE data and converts it into an object we can use.
+//Two-Line Element Set (TLE) of the STARLINK-1008. First line contains satellite identifiers, the following two contain actual parameters of its orbit.
+const tleLine1 = '1 44714U 19074B   26123.17227885  .00020924  00000+0  42423-3 0  9999'
+const tleLine2 = '2 44714  53.1551 283.4608 0000949  19.5923 340.5121 15.46371711357247'
+// satrec is an object that holds info about satellite orbit for SGP4.
 const satrec = twoline2satrec(tleLine1, tleLine2);
-//Gets current position of satellite using (SGP4) model, It predicts a satellite’s future position and velocity from its Two-Line Element set (TLE) data. 
-const positionAndVelocity = satellite.propagate(satrec, new Date());
-//Convert ECI(Earth-Centered Inertial) data to latitude and Longitude and height. gmst computes earths rotation at current time.
-const gmst = satellite.gstime(new Date());
-const eciGeo = satellite.eciToGeodetic(
-  positionAndVelocity.position, gmst
-);
-// Convert to radians
-const lat = eciGeo.latitude;
-const lon = eciGeo.longitude;
-//const height = eciGeo.height;
 
-// Convert to earth sphere object. 
-const earthRadius = 3;
-
-const x = earthRadius * Math.cos(lat) * Math.cos(lon);
-const y = earthRadius * Math.sin(lat);
-const z = earthRadius * Math.cos(lat) * Math.sin(lon);
-
-
-//Orbit Lines in progress
+// Orbit lines. 
 const lineMaterial = new THREE.LineBasicMaterial( { color: 0x0000ff } );
-
+const earthRadius = 3;
 const points = [];
-points.push( new THREE.Vector3( - 10, 0, 0 ) );
-points.push( new THREE.Vector3( 0, 10, 0 ) );
-points.push( new THREE.Vector3( 10, 0, 0 ) );
+  
+for (let i = 0; i < 90; i++) {
+    const pos2 = new Date(Date.now() + i * 60 * 1000); // +1 min each step
+    //Gets current position of satellite using (SGP4) model, It predicts a satellite’s future position and velocity from its JSON or TLE data. 
+    const positionAndVelocity = satellite.propagate(satrec, pos2);
+    //Convert ECI(Earth-Centered Inertial) data to latitude and Longitude and height. gmst computes earths rotation at current time.
+    const gmst = satellite.gstime(pos2);
+    const eciGeo = satellite.eciToGeodetic(
+      positionAndVelocity.position, gmst
+    );
+    // Geodetic co-ords in radians
+    const lat = eciGeo.latitude;
+    const lon = eciGeo.longitude;
+    const height = eciGeo.height;
 
-const lineGeometry = new THREE.BufferGeometry().setFromPoints( points );
-const line = new THREE.Line(lineGeometry, material);
+    // Altitude calculation. Earth's radius is 6371km. 1km = 3 my earths radius / 6371 earths actual radius in km.
+    const scale = earthRadius / 6371;
+    const radius = earthRadius + (height * scale);
+
+    // Convert to earth sphere object. 
+    const x = earthRadius * Math.cos(lat) * Math.cos(lon);
+    const y = earthRadius * Math.sin(lat);
+    const z = earthRadius * Math.cos(lat) * Math.sin(lon);
+    // Push to array
+    points.push(new THREE.Vector3(x,y,z));
+  }
+//Create one geometry for all points in array.
+const orbitGeometry = new THREE.BufferGeometry().setFromPoints(points);
+
+//Create one flowing line for points
+const line = new THREE.Line(orbitGeometry, lineMaterial);
 scene.add(line);
 
 
@@ -161,7 +166,10 @@ function animate( time ) {
   fresnalMesh.rotation.y = time / 4000;
 
   const now = new Date();
-  const pos = satellite.propagate(satrec, now);
+  const pos = satellite.propagate(satrec, now); // Adjust this to get orbit position over time.
+
+  // TODO: Add Satellite animation along orbit line.
+
 
   if (pos.position) {
     const gmst = satellite.gstime(now);
