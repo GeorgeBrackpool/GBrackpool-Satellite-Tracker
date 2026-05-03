@@ -157,6 +157,8 @@ const sunLighting = new THREE.DirectionalLight(0xffffff, 2);
 sunLighting.position.set(-2,0.5,2);
 scene.add(sunLighting);
 
+let simulationTime = Date.now();
+const timeScale = 60;
 
 // Update frames, three js animations
 function animate( time ) {
@@ -165,11 +167,10 @@ function animate( time ) {
   earthCloudMesh.rotation.y = time/ 4000;
   fresnalMesh.rotation.y = time / 4000;
 
+  simulationTime += 16 * timeScale;// used to speed up animation of satellite to show orbit path. Plan to adjust these in future to be adjustable via slider in UI
+  const nowSim = new Date(simulationTime);
   const now = new Date();
-  const pos = satellite.propagate(satrec, now); // Adjust this to get orbit position over time.
-
-  // TODO: Add Satellite animation along orbit line.
-
+  const pos = satellite.propagate(satrec, nowSim);
 
   if (pos.position) {
     const gmst = satellite.gstime(now);
@@ -177,7 +178,6 @@ function animate( time ) {
 
     const lat = geo.latitude;
     const lon = geo.longitude;
-    //const satHeight = geo.height;
 
     satelliteMesh.position.set(
       earthRadius * Math.cos(lat) * Math.cos(lon),
