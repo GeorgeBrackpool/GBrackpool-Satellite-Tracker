@@ -11,7 +11,7 @@ import { gstime,degreesToRadians,radiansToDegrees,degreesLong,degreesLat,eciToGe
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 // Moves camera position so we can view the planet.
-camera.position.z = 5;
+camera.position.z = 8;
 // WebGL rendering
 const renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setSize( window.innerWidth, window.innerHeight );
@@ -156,9 +156,18 @@ scene.add(line);
 const sunLighting = new THREE.DirectionalLight(0xffffff, 2);
 sunLighting.position.set(-2,0.5,2);
 scene.add(sunLighting);
-
+// Used for speeding up simulation of satellite
 let simulationTime = Date.now();
 const timeScale = 60;
+
+// for the adjusting of values for the satellite details orbit line
+const value = document.querySelector("#value");
+const input = document.querySelector("#orbitPath");
+value.textContent = input.value;
+input.addEventListener("input", (event) => {
+  value.textContent = event.target.value;
+});
+
 
 // Update frames, three js animations
 function animate( time ) {
@@ -167,7 +176,7 @@ function animate( time ) {
   earthCloudMesh.rotation.y = time/ 4000;
   fresnalMesh.rotation.y = time / 4000;
 
-  simulationTime += 16 * timeScale;// used to speed up animation of satellite to show orbit path. Plan to adjust these in future to be adjustable via slider in UI
+  simulationTime += 16 * timeScale;// used to speed up animation of satellite to show orbit path as it's in real time normally. Plan to adjust these in future to be adjustable via slider in UI
   const nowSim = new Date(simulationTime);
   const now = new Date();
   const pos = satellite.propagate(satrec, nowSim);

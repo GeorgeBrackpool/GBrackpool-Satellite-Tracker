@@ -3,11 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <title>GBrackpool Satellite Tracker</title>
 </head>
 <body>
-    <div id="title-text">GBrackpool's Satellite Tracker</div>
-
+    <div id="info">GBrackpool's Satellite Tracker</div>
+    <div class="card">
+        <h2>Satellite Data</h2>
+        <p> Example Text</p>
+        <p>Example text</p>
+        <div>
+            <input type="range" id="orbitPath" name="orbitPath" min="90" max="360" value="90" />
+            <label for="orbitPath">Orbit Path</label>
+            <p>Orbit Days:<output id="value"></output></p>
+        </div>
+    </div>
     <script type="module" src="/main.js"></script>
 </body>
 </html>
