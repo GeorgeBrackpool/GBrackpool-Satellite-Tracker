@@ -5,6 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { getFresnelMat } from './getFresnalMat.js';
 import { propagate, SatRecError } from 'satellite.js';
 import { gstime,degreesToRadians,radiansToDegrees,degreesLong,degreesLat,eciToGeodetic } from 'satellite.js';
+import { update } from 'three/examples/jsm/libs/tween.module.js';
 // npx vite to run.
 
 // Load scene and camera
@@ -113,43 +114,65 @@ const tleLine1 = '1 44714U 19074B   26123.17227885  .00020924  00000+0  42423-3 
 const tleLine2 = '2 44714  53.1551 283.4608 0000949  19.5923 340.5121 15.46371711357247'
 // satrec is an object that holds info about satellite orbit for SGP4.
 const satrec = twoline2satrec(tleLine1, tleLine2);
-
-// Orbit lines. 
-const lineMaterial = new THREE.LineBasicMaterial( { color: 0x0000ff } );
 const earthRadius = 3;
-const points = [];
-  
-for (let i = 0; i < 90; i++) {
-    const pos2 = new Date(Date.now() + i * 60 * 1000); // +1 min each step
-    //Gets current position of satellite using (SGP4) model, It predicts a satellite’s future position and velocity from its JSON or TLE data. 
-    const positionAndVelocity = satellite.propagate(satrec, pos2);
-    //Convert ECI(Earth-Centered Inertial) data to latitude and Longitude and height. gmst computes earths rotation at current time.
-    const gmst = satellite.gstime(pos2);
-    const eciGeo = satellite.eciToGeodetic(
-      positionAndVelocity.position, gmst
-    );
-    // Geodetic co-ords in radians
-    const lat = eciGeo.latitude;
-    const lon = eciGeo.longitude;
-    const height = eciGeo.height;
 
-    // Altitude calculation. Earth's radius is 6371km. 1km = 3 my earths radius / 6371 earths actual radius in km.
-    const scale = earthRadius / 6371;
-    const radius = earthRadius + (height * scale);
+// Get the slider for orbit minutes
+const input = document.querySelector("#orbitMins");
+const value = document.querySelector("#value");
 
-    // Convert to earth sphere object. 
-    const x = earthRadius * Math.cos(lat) * Math.cos(lon);
-    const y = earthRadius * Math.sin(lat);
-    const z = earthRadius * Math.cos(lat) * Math.sin(lon);
-    // Push to array
-    points.push(new THREE.Vector3(x,y,z));
-  }
-//Create one geometry for all points in array.
-const orbitGeometry = new THREE.BufferGeometry().setFromPoints(points);
+let orbitMins = parseInt(input.value);
 
-//Create one flowing line for points
-const line = new THREE.Line(orbitGeometry, lineMaterial);
-scene.add(line);
+// Create Orbit line once
+const orbitGeometry = new THREE.BufferGeometry();
+const lineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
+
+let orbitLine = new THREE.Line(orbitGeometry, lineMaterial);
+scene.add(orbitLine);
+// Slider event
+value.textContent = orbitMins;
+
+input.addEventListener("input", (event) => {
+  orbitMins = parseInt(event.target.value);
+  value.textContent = orbitMins;
+
+  updateOrbit();
+});
+
+function updateOrbit()
+{
+  const points = [];
+
+  // 90 is 90 minutes
+  for (let i = 0; i < orbitMins; i++) {
+      const time = new Date(Date.now() + i * 60 * 1000); // +1 min each step
+      //Gets current position of satellite using (SGP4) model, It predicts a satellite’s future position and velocity from its JSON or TLE data. 
+      const pos = satellite.propagate(satrec, time);
+      if(!pos.position) continue;
+      //Convert ECI(Earth-Centered Inertial) data to latitude and Longitude and height. gmst computes earths rotation at current time.
+      const gmst = satellite.gstime(time);
+      const eciGeo = satellite.eciToGeodetic(
+        pos.position, gmst
+      );
+      // Geodetic co-ords in radians
+      const lat = eciGeo.latitude;
+      const lon = eciGeo.longitude;
+      const height = eciGeo.height;
+
+      // Altitude calculation. Earth's radius is 6371km. 1km = 3 my earths radius / 6371 earths actual radius in km.
+      const scale = earthRadius / 6371;
+      const radius = earthRadius + (height * scale);
+
+      // Convert to earth sphere object. 
+      const x = earthRadius * Math.cos(lat) * Math.cos(lon);
+      const y = earthRadius * Math.sin(lat);
+      const z = earthRadius * Math.cos(lat) * Math.sin(lon);
+      // Push to array
+      points.push(new THREE.Vector3(x,y,z));
+    }
+    // Update existing geometry.
+   orbitLine.geometry.dispose();
+   orbitLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
+}
 
 
 // Lighting for earth
@@ -160,13 +183,6 @@ scene.add(sunLighting);
 let simulationTime = Date.now();
 const timeScale = 60;
 
-// for the adjusting of values for the satellite details orbit line
-const value = document.querySelector("#value");
-const input = document.querySelector("#orbitPath");
-value.textContent = input.value;
-input.addEventListener("input", (event) => {
-  value.textContent = event.target.value;
-});
 
 
 // Update frames, three js animations
