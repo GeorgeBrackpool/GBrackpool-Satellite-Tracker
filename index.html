@@ -16,9 +16,14 @@
         <p> Example Text</p>
         <p>Example text</p>
         <div>
-            <input type="range" id="orbitMins" name="orbitPath" min="90" max="360" value="90" />
-            <label for="orbitMins">Orbit Path</label>
-            <p>Orbit Time(Minutes):<output id="value"></output></p>
+            <input type="range" id="orbitMins" name="orbitPath" min="90" max="5000" value="90" />
+            <label for="orbitMins">Orbit Time (Minutes)</label>
+            <span id="orbitValue"> 90</span>
+            <div id="sat-position">
+                <p>Latitude:</p>
+                <p>Longtitude:</p>
+                <p>Height:</p>
+            </div>
         </div>
     </div>
     <script type="module" src="/main.js"></script>

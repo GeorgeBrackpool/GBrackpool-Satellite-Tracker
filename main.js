@@ -118,9 +118,10 @@ const earthRadius = 3;
 
 // Get the slider for orbit minutes
 const input = document.querySelector("#orbitMins");
-const value = document.querySelector("#value");
-
+const value = document.querySelector("#orbitValue");
 let orbitMins = parseInt(input.value);
+// For Frontend.
+const satPosition = document.getElementById("sat-position");
 
 // Create Orbit line once
 const orbitGeometry = new THREE.BufferGeometry();
@@ -137,6 +138,15 @@ input.addEventListener("input", (event) => {
 
   updateOrbit();
 });
+
+// Lighting for earth
+const sunLighting = new THREE.DirectionalLight(0xffffff, 2);
+sunLighting.position.set(-2,0.5,2);
+scene.add(sunLighting);
+// Used for speeding up simulation of satellite
+let simulationTime = Date.now();
+let timeScale = 90; // set to 1 for real time.
+
 
 function updateOrbit()
 {
@@ -157,15 +167,15 @@ function updateOrbit()
       const lat = eciGeo.latitude;
       const lon = eciGeo.longitude;
       const height = eciGeo.height;
-
+     
       // Altitude calculation. Earth's radius is 6371km. 1km = 3 my earths radius / 6371 earths actual radius in km.
       const scale = earthRadius / 6371;
       const radius = earthRadius + (height * scale);
 
       // Convert to earth sphere object. 
-      const x = earthRadius * Math.cos(lat) * Math.cos(lon);
-      const y = earthRadius * Math.sin(lat);
-      const z = earthRadius * Math.cos(lat) * Math.sin(lon);
+      const x = radius * Math.cos(lat) * Math.cos(lon);
+      const y = radius * Math.sin(lat);
+      const z = radius * Math.cos(lat) * Math.sin(lon);
       // Push to array
       points.push(new THREE.Vector3(x,y,z));
     }
@@ -173,15 +183,8 @@ function updateOrbit()
    orbitLine.geometry.dispose();
    orbitLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
 }
+updateOrbit();
 
-
-// Lighting for earth
-const sunLighting = new THREE.DirectionalLight(0xffffff, 2);
-sunLighting.position.set(-2,0.5,2);
-scene.add(sunLighting);
-// Used for speeding up simulation of satellite
-let simulationTime = Date.now();
-const timeScale = 60;
 
 
 
@@ -194,21 +197,30 @@ function animate( time ) {
 
   simulationTime += 16 * timeScale;// used to speed up animation of satellite to show orbit path as it's in real time normally. Plan to adjust these in future to be adjustable via slider in UI
   const nowSim = new Date(simulationTime);
-  const now = new Date();
   const pos = satellite.propagate(satrec, nowSim);
 
   if (pos.position) {
-    const gmst = satellite.gstime(now);
+    const gmst = satellite.gstime(nowSim);
     const geo = satellite.eciToGeodetic(pos.position, gmst);
 
     const lat = geo.latitude;
     const lon = geo.longitude;
+    const height = geo.height;
+    const scale = earthRadius / 6371;
+    const radius = earthRadius + (height * scale);
+
 
     satelliteMesh.position.set(
-      earthRadius * Math.cos(lat) * Math.cos(lon),
-      earthRadius * Math.sin(lat),
-      earthRadius * Math.cos(lat) * Math.sin(lon)
+      radius * Math.cos(lat) * Math.cos(lon),
+      radius * Math.sin(lat),
+      radius * Math.cos(lat) * Math.sin(lon)
     );
+     // For Frontend UI Panel.
+      satPosition.innerHTML= `
+      Latitude: ${THREE.MathUtils.radToDeg(lat).toFixed(2)}<br>
+      Longitude: ${THREE.MathUtils.radToDeg(lon).toFixed(2)}<br>
+      Height: ${height.toFixed(2)} km`;
+    
   }
     renderer.render( scene, camera );
 }
