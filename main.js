@@ -148,57 +148,89 @@ let simulationTime = Date.now();
 let timeScale = 90; // set to 1 for real time.
 
 
-function updateOrbit()
-{
-  const points = [];
+function updateOrbit() {
 
-  // 90 is 90 minutes
-  for (let i = 0; i < orbitMins; i++) {
-      const time = new Date(Date.now() + i * 60 * 1000); // +1 min each step
-      //Gets current position of satellite using (SGP4) model, It predicts a satellite’s future position and velocity from its JSON or TLE data. 
-      const pos = satellite.propagate(satrec, time);
-      if(!pos.position) continue;
-      //Convert ECI(Earth-Centered Inertial) data to latitude and Longitude and height. gmst computes earths rotation at current time.
-      const gmst = satellite.gstime(time);
-      const eciGeo = satellite.eciToGeodetic(
-        pos.position, gmst
-      );
-      // Geodetic co-ords in radians
-      const lat = eciGeo.latitude;
-      const lon = eciGeo.longitude;
-      const height = eciGeo.height;
-     
-      // Altitude calculation. Earth's radius is 6371km. 1km = 3 my earths radius / 6371 earths actual radius in km.
-      const scale = earthRadius / 6371;
-      const radius = earthRadius + (height * scale);
+    const points = [];
+    // Freeze current simulation moment
+    const startTime = simulationTime;
 
-      // Convert to earth sphere object. 
-      const x = radius * Math.cos(lat) * Math.cos(lon);
-      const y = radius * Math.sin(lat);
-      const z = radius * Math.cos(lat) * Math.sin(lon);
-      // Push to array
-      points.push(new THREE.Vector3(x,y,z));
+    for (let i = 0; i < orbitMins; i++) {
+
+        const time =
+            new Date(startTime + i * 30 * 1000);
+
+        const pos =
+            satellite.propagate(satrec, time);
+
+        if (!pos.position) continue;
+
+        const gmst = satellite.gstime(time);
+
+        const geo =
+            satellite.eciToGeodetic(
+                pos.position,
+                gmst
+            );
+
+        const lat = geo.latitude;
+        const lon = geo.longitude;
+        const height = geo.height;
+
+        const scale = earthRadius / 6371;
+
+        const radius =
+            earthRadius + (height * scale);
+
+        const x =
+            radius * Math.cos(lat) * Math.cos(lon);
+
+        const y =
+            radius * Math.sin(lat);
+
+        const z =
+            radius * Math.cos(lat) * Math.sin(lon);
+
+        points.push(
+            new THREE.Vector3(x, y, z)
+        );
     }
-    // Update existing geometry.
-   orbitLine.geometry.dispose();
-   orbitLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
+    orbitLine.geometry.dispose();
+    orbitLine.geometry =
+        new THREE.BufferGeometry()
+            .setFromPoints(points);
+
+    orbitLine.geometry.computeBoundingSphere();
 }
-updateOrbit();
 
-
-
+let lastFrameTime = performance.now();
 
 // Update frames, three js animations
 function animate( time ) {
+   const nowSim = new Date(simulationTime);
+  const pos = satellite.propagate(satrec, nowSim);
+
   sphereMesh.rotation.y = time / 8000;
   earthLightsMesh.rotation.y = time / 8000;
   earthCloudMesh.rotation.y = time/ 4000;
   fresnalMesh.rotation.y = time / 4000;
 
-  simulationTime += 16 * timeScale;// used to speed up animation of satellite to show orbit path as it's in real time normally. Plan to adjust these in future to be adjustable via slider in UI
-  const nowSim = new Date(simulationTime);
-  const pos = satellite.propagate(satrec, nowSim);
+  // frame rate independent time for simulation
+  const now = performance.now();
+  const deltaMs = now - lastFrameTime;
+  lastFrameTime = now;
+  simulationTime += deltaMs * timeScale;
+  // Refreshes orbit prediction every 2 seconds.
+  let orbitRefreshTimer = 0;
+  orbitRefreshTimer += deltaMs;
 
+  if (orbitRefreshTimer > 2000) {
+
+      updateOrbit();
+
+      orbitRefreshTimer = 0;
+  }
+
+ 
   if (pos.position) {
     const gmst = satellite.gstime(nowSim);
     const geo = satellite.eciToGeodetic(pos.position, gmst);
