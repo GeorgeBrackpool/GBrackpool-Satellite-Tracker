@@ -114,6 +114,8 @@ const tleLine1 = '1 44714U 19074B   26123.17227885  .00020924  00000+0  42423-3 
 const tleLine2 = '2 44714  53.1551 283.4608 0000949  19.5923 340.5121 15.46371711357247'
 // satrec is an object that holds info about satellite orbit for SGP4.
 const satrec = twoline2satrec(tleLine1, tleLine2);
+const satelliteName = "STARLINK-1008";
+const satelliteID = satrec.satnum;
 const earthRadius = 3;
 
 // Get the slider for orbit minutes
@@ -122,6 +124,9 @@ const value = document.querySelector("#orbitValue");
 let orbitMins = parseInt(input.value);
 // For Frontend.
 const satPosition = document.getElementById("sat-position");
+document.getElementById("sat-name").textContent = satelliteName; // Sat name for frontend.
+const satNumber = document.getElementById("sat-num");  // Sat ID for frontend.
+satNumber.innerHTML = `Satellite ID: ${satelliteID}`;
 
 // Create Orbit line once
 const orbitGeometry = new THREE.BufferGeometry();
@@ -145,7 +150,8 @@ sunLighting.position.set(-2,0.5,2);
 scene.add(sunLighting);
 // Used for speeding up simulation of satellite
 let simulationTime = Date.now();
-let timeScale = 90; // set to 1 for real time.
+let timeScale = 90; // set to 1 for real time. TODO: make adjustable variable in frontend. Maybe a button to toggle between 1 and 90?
+
 
 
 function updateOrbit() {
