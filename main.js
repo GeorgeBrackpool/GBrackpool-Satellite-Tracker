@@ -1,272 +1,70 @@
-import * as THREE from 'three';
-import * as satellite from 'satellite.js';
-import { twoline2satrec } from 'satellite.js';
-import { OrbitControls } from 'three/examples/jsm/Addons.js';
-import { getFresnelMat } from './getFresnalMat.js';
-import { propagate, SatRecError } from 'satellite.js';
-import { gstime,degreesToRadians,radiansToDegrees,degreesLong,degreesLat,eciToGeodetic } from 'satellite.js';
-import { update } from 'three/examples/jsm/libs/tween.module.js';
-// npx vite to run.
+import { Environment } from './Environment.js';
+import { Earth } from './Earth.js';
+import { Starfield } from './Starfield.js';
+import { SatelliteTracker } from './SatelliteTracker.js';
+import { UIManager } from './UIManager.js';
 
-// Load scene and camera
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-// Moves camera position so we can view the planet.
-camera.position.z = 8;
-// WebGL rendering
-const renderer = new THREE.WebGLRenderer({antialias: true});
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+// setup threejs env.
+const env = new Environment();
 
-// Load Orbit Controls (Camera Movement)
-const controls = new OrbitControls( camera, renderer.domElement );
-// controls.update() must be called after any manual changes to the camera's transform
-controls.update();
+// creation of earth and starfield
+const earth = new Earth();
+env.scene.add(earth.group);
 
-// Using three.js to render the earth and add it to the scene.
-const earthGroup = new THREE.Group();
-// Earth's axial tilt. Converting degrees to radian for 3js means Pi is divided by 180 as full circle is 2Pi. 180 is pi.
-earthGroup.rotation.z = -23.4 * Math.PI / 180;
-scene.add(earthGroup);
-// Earth Material, Mesh and Texture
-const loader = new THREE.TextureLoader();
-const texture = loader.load( 'images/earthmap1k.jpg' );
-texture.colorSpace = THREE.SRGBColorSpace;
-const geometry = new THREE.IcosahedronGeometry( 1, 12);
-const material = new THREE.MeshStandardMaterial( { map: texture,} );
-const sphereMesh = new THREE.Mesh( geometry, material );
-earthGroup.add(sphereMesh);
+const starfield = new Starfield();
+env.scene.add(starfield.mesh);
 
-// Light mesh and mat for dark side of earth
-const earthLightMat = new THREE.MeshBasicMaterial({
-  map: loader.load('images/earthlights1k.jpg'), blending: THREE.AdditiveBlending,
-})
-const earthLightsMesh = new THREE.Mesh(geometry, earthLightMat);
-earthGroup.add(earthLightsMesh);
+// Two-Line Element Set (TLE) of the STARLINK-1008. First line contains satellite identifiers, the following two contain actual parameters of its orbit.
+const tleLine1 = '1 44714U 19074B   26123.17227885  .00020924  00000+0  42423-3 0  9999';
+const tleLine2 = '2 44714  53.1551 283.4608 0000949  19.5923 340.5121 15.46371711357247';
+const satTracker = new SatelliteTracker(tleLine1, tleLine2, "STARLINK-1008");
+env.scene.add(satTracker.mesh);
+env.scene.add(satTracker.orbitLine);
 
-// Mesh and Mat for Clouds on earth
-const earthCloudMat = new THREE.MeshStandardMaterial({
-  map: loader.load('./images/earthcloudmap.jpg'), transparent: true,
-  opacity: 0.5,
-  blending: THREE.AdditiveBlending,
-})
-const earthCloudMesh = new THREE.Mesh(geometry, earthCloudMat);
-earthCloudMesh.scale.setScalar(1.003);
-earthGroup.add(earthCloudMesh);
-
-// Fresnal Shader for a blue glow around Earth. See getFresnalMat.js.
-const fresnalMat = getFresnelMat();
-const fresnalMesh = new THREE.Mesh(geometry, fresnalMat);
-fresnalMesh.scale.setScalar(1.02);
-earthGroup.add(fresnalMesh);
-
-
-// Creating a Starfield
-// Number of stars
-const starCount = 5000;
-
-// Geometry, buffer geometry is best for for lots of objects like this.
-const starGeometry = new THREE.BufferGeometry();
-const positions = [];
-
-for (let i = 0; i < starCount; i++) {
-    const radius = 500 + Math.random() * 500; // hollow shell
-    // Use these values to pick random directions for the stars, theta is rotation around, phy is up/down.
-    const theta = Math.random() * 2 * Math.PI;
-    const phi = Math.acos((Math.random() * 2) - 1);
-    // Convert the values for radius and direction to co-ordinates
-    const x = radius * Math.sin(phi) * Math.cos(theta);
-    const y = radius * Math.sin(phi) * Math.sin(theta);
-    const z = radius * Math.cos(phi);
-    // Add the co-ordinates to the array
-    positions.push(x, y, z);
-}
-// every 3 numbers = a star position
-starGeometry.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute(positions, 3)
-);
-
-// Stars Material
-const starMaterial = new THREE.PointsMaterial({
-    color: 0xffffff,
-    size: 1.5,
-    sizeAttenuation: true
-});
-
-// Points object for starfield, render stars as points
-const stars = new THREE.Points(starGeometry, starMaterial);
-// Slight rotation to stars
-stars.rotation.y += 0.0001;
-scene.add(stars);
-
-// 3js Rendering of the satellite
-const satGeometry = new THREE.SphereGeometry(0.05, 16, 8);
-const satMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-const satelliteMesh = new THREE.Mesh(satGeometry, satMaterial);
-scene.add(satelliteMesh);
-
-
-//Two-Line Element Set (TLE) of the STARLINK-1008. First line contains satellite identifiers, the following two contain actual parameters of its orbit.
-const tleLine1 = '1 44714U 19074B   26123.17227885  .00020924  00000+0  42423-3 0  9999'
-const tleLine2 = '2 44714  53.1551 283.4608 0000949  19.5923 340.5121 15.46371711357247'
-// satrec is an object that holds info about satellite orbit for SGP4.
-const satrec = twoline2satrec(tleLine1, tleLine2);
-const satelliteName = "STARLINK-1008";
-const satelliteID = satrec.satnum;
-const earthRadius = 3;
-
-// Get the slider for orbit minutes
-const input = document.querySelector("#orbitMins");
-const value = document.querySelector("#orbitValue");
-let orbitMins = parseInt(input.value);
-// For Frontend.
-const satPosition = document.getElementById("sat-position");
-document.getElementById("sat-name").textContent = satelliteName; // Sat name for frontend.
-const satNumber = document.getElementById("sat-num");  // Sat ID for frontend.
-satNumber.innerHTML = `Satellite ID: ${satelliteID}`;
-
-// Create Orbit line once
-const orbitGeometry = new THREE.BufferGeometry();
-const lineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
-
-let orbitLine = new THREE.Line(orbitGeometry, lineMaterial);
-scene.add(orbitLine);
-// Slider event
-value.textContent = orbitMins;
-
-input.addEventListener("input", (event) => {
-  orbitMins = parseInt(event.target.value);
-  value.textContent = orbitMins;
-
-  updateOrbit();
-});
-
-// Lighting for earth
-const sunLighting = new THREE.DirectionalLight(0xffffff, 2);
-sunLighting.position.set(-2,0.5,2);
-scene.add(sunLighting);
-// Used for speeding up simulation of satellite
+// Setup of simulation time variables
 let simulationTime = Date.now();
-let timeScale = 90; // set to 1 for real time. TODO: make adjustable variable in frontend. Maybe a button to toggle between 1 and 90?
-
-
-
-function updateOrbit() {
-
-    const points = [];
-    // Freeze current simulation moment
-    const startTime = simulationTime;
-
-    for (let i = 0; i < orbitMins; i++) {
-
-        const time =
-            new Date(startTime + i * 30 * 1000);
-
-        const pos =
-            satellite.propagate(satrec, time);
-
-        if (!pos.position) continue;
-
-        const gmst = satellite.gstime(time);
-
-        const geo =
-            satellite.eciToGeodetic(
-                pos.position,
-                gmst
-            );
-
-        const lat = geo.latitude;
-        const lon = geo.longitude;
-        const height = geo.height;
-
-        const scale = earthRadius / 6371;
-
-        const radius =
-            earthRadius + (height * scale);
-
-        const x =
-            radius * Math.cos(lat) * Math.cos(lon);
-
-        const y =
-            radius * Math.sin(lat);
-
-        const z =
-            radius * Math.cos(lat) * Math.sin(lon);
-
-        points.push(
-            new THREE.Vector3(x, y, z)
-        );
-    }
-    orbitLine.geometry.dispose();
-    orbitLine.geometry =
-        new THREE.BufferGeometry()
-            .setFromPoints(points);
-
-    orbitLine.geometry.computeBoundingSphere();
-}
-
+let timeScale = 90;
 let lastFrameTime = performance.now();
+let orbitRefreshTimer = 0;
 
-// Update frames, three js animations
-function animate( time ) {
-   const nowSim = new Date(simulationTime);
-  const pos = satellite.propagate(satrec, nowSim);
+// for UI.
+const ui = new UIManager((newOrbitMins) => {
+    // When the user moves the slider, redraw the line
+    satTracker.updateOrbitLine(simulationTime, newOrbitMins);
+});
+ui.setStaticInfo(satTracker.name, satTracker.id);
 
-  sphereMesh.rotation.y = time / 8000;
-  earthLightsMesh.rotation.y = time / 8000;
-  earthCloudMesh.rotation.y = time/ 4000;
-  fresnalMesh.rotation.y = time / 4000;
+// Initial orbit line draw
+satTracker.updateOrbitLine(simulationTime, ui.getOrbitMins());
 
-  // frame rate independent time for simulation
-  const now = performance.now();
-  const deltaMs = now - lastFrameTime;
-  lastFrameTime = now;
-  simulationTime += deltaMs * timeScale;
-  // Refreshes orbit prediction every 2 seconds.
-  let orbitRefreshTimer = 0;
-  orbitRefreshTimer += deltaMs;
+function animate(time) {
+    const now = performance.now();
+    const deltaMs = now - lastFrameTime;
+    lastFrameTime = now;
+    simulationTime += deltaMs * timeScale;
+    orbitRefreshTimer += deltaMs;
 
-  if (orbitRefreshTimer > 2000) {
+    // Update Visuals
+    earth.update(time);
+    starfield.update();
 
-      updateOrbit();
+    // Refreshes orbit prediction every 2 seconds to save performance
+    if (orbitRefreshTimer > 2000) {
+        satTracker.updateOrbitLine(simulationTime, ui.getOrbitMins());
+        orbitRefreshTimer = 0;
+    }
 
-      orbitRefreshTimer = 0;
-  }
-
- 
-  if (pos.position) {
-    const gmst = satellite.gstime(nowSim);
-    const geo = satellite.eciToGeodetic(pos.position, gmst);
-
-    const lat = geo.latitude;
-    const lon = geo.longitude;
-    const height = geo.height;
-    const scale = earthRadius / 6371;
-    const radius = earthRadius + (height * scale);
-
-
-    satelliteMesh.position.set(
-      radius * Math.cos(lat) * Math.cos(lon),
-      radius * Math.sin(lat),
-      radius * Math.cos(lat) * Math.sin(lon)
-    );
-     // For Frontend UI Panel.
-      satPosition.innerHTML= `
-      Latitude: ${THREE.MathUtils.radToDeg(lat).toFixed(2)}<br>
-      Longitude: ${THREE.MathUtils.radToDeg(lon).toFixed(2)}<br>
-      Height: ${height.toFixed(2)} km`;
+    // Update Satellite and fetch its latest stats
+    const nowSim = new Date(simulationTime);
+    const satData = satTracker.updatePosition(nowSim);
     
-  }
-    renderer.render( scene, camera );
-}
-renderer.setAnimationLoop( animate );
+    // Pass those stats to the frontend
+    if (satData) {
+        ui.updateDynamicInfo(satData.lat, satData.lon, satData.height);
+    }
 
-function handleWindowResize () {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+    // Render Scene
+    env.render();
 }
-window.addEventListener('resize', handleWindowResize, false);
+
+env.renderer.setAnimationLoop(animate);
