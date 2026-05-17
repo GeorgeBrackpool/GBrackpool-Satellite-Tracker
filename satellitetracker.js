@@ -2,15 +2,17 @@ import * as THREE from 'three';
 import * as satellite from 'satellite.js';
 
 export class SatelliteTracker {
-    constructor(tleLine1, tleLine2, name, earthRadius = 3) {
+    constructor(tleLine1, tleLine2, name, color = 0xff0000, linecolor = 0x0000ff, earthRadius = 3) {
         this.name = name;
         this.earthRadius = earthRadius;
         this.satrec = satellite.twoline2satrec(tleLine1, tleLine2);
         this.id = this.satrec.satnum;
+        this.color = color; // 0xff0000 red is default.
+        this.linecolor = linecolor; // 0x0000ff Blue is default.
 
         // Satellite Mesh
         const satGeometry = new THREE.SphereGeometry(0.05, 16, 8);
-        const satMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const satMaterial = new THREE.MeshBasicMaterial({ color: color });
         this.mesh = new THREE.Mesh(satGeometry, satMaterial);
         
         // Custom user data so we can identify it later when clicking
@@ -18,9 +20,11 @@ export class SatelliteTracker {
 
         // Orbit Line
         const orbitGeometry = new THREE.BufferGeometry();
-        const lineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
-        this.orbitLine = new THREE.Line(orbitGeometry, lineMaterial);
+        const lineMaterial = new THREE.LineBasicMaterial({ color: linecolor });
+        this.orbitLine = new THREE.Line(orbitGeometry, lineMaterial); 
     }
+
+    // TODO: implement raycast to make sat's clickable to change UI to show that satellite's stats.
 
     updateOrbitLine(simulationTime, orbitMins) {
         const points = [];
