@@ -10,7 +10,7 @@ export class Earth {
         const geometry = new THREE.IcosahedronGeometry(1, 12);
 
         // Base Earth
-        const texture = loader.load('images/earthmap1k.jpg');
+        const texture = loader.load('/images/earthmap1k.jpg');
         texture.colorSpace = THREE.SRGBColorSpace;
         const material = new THREE.MeshStandardMaterial({ map: texture });
         this.sphereMesh = new THREE.Mesh(geometry, material);
@@ -18,7 +18,7 @@ export class Earth {
 
         // Lights for earth
         const earthLightMat = new THREE.MeshBasicMaterial({
-            map: loader.load('images/earthlights1k.jpg'),
+            map: loader.load('/images/earthlights1k.jpg'),
             blending: THREE.AdditiveBlending,
         });
         this.earthLightsMesh = new THREE.Mesh(geometry, earthLightMat);
@@ -26,7 +26,7 @@ export class Earth {
 
         // Clouds for earth
         const earthCloudMat = new THREE.MeshStandardMaterial({
-            map: loader.load('images/earthcloudmap.jpg'),
+            map: loader.load('/images/earthcloudmap.jpg'),
             transparent: true,
             opacity: 0.5,
             blending: THREE.AdditiveBlending,
