@@ -11,7 +11,7 @@ export class SatelliteTracker {
         this.linecolor = linecolor; // 0x0000ff Blue is default.
 
         // Satellite Mesh
-        const satGeometry = new THREE.SphereGeometry(0.15, 16, 8);
+        const satGeometry = new THREE.SphereGeometry(0.10, 16, 8);
         const satMaterial = new THREE.MeshBasicMaterial({ color: color });
         this.mesh = new THREE.Mesh(satGeometry, satMaterial);
         
