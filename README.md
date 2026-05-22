@@ -1,8 +1,8 @@
 # GBrackpool Satellite Tracker
 An interactive 3D satellite visualisation system built with Three.js and satellite.js that propagates real TLE (Two-Line Element) orbital data from Celestrak using the SGP4 algorithm to display current satellite positions and predicted orbital trajectories.
 
-![Satellite Tracker Screenshot](./images/SatelliteTrackerScreenshot.JPG)
-![Satellite Tracker Screenshot 2](./images/SatelliteTrackerScreenshot2.JPG)
+![Satellite Tracker Screenshot](public/images/SatelliteTrackerScreenshot.JPG)
+![Satellite Tracker Screenshot 2](public/images/SatelliteTrackerScreenshot2.JPG)
 
 
 ## Features
