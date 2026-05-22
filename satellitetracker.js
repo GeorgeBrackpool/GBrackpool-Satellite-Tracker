@@ -15,8 +15,8 @@ export class SatelliteTracker {
         const satMaterial = new THREE.MeshBasicMaterial({ color: color });
         this.mesh = new THREE.Mesh(satGeometry, satMaterial);
         
-        // Custom user data so we can identify it later when clicking
-        this.mesh.userData = { isSatellite: true, id: this.id, name: this.name };
+        // User data for clicking on sat mesh.
+        this.mesh.userData = { satellite: this };
 
         // Orbit Line
         const orbitGeometry = new THREE.BufferGeometry();
@@ -24,12 +24,13 @@ export class SatelliteTracker {
         this.orbitLine = new THREE.Line(orbitGeometry, lineMaterial); 
     }
 
-    // TODO: implement raycast to make sat's clickable to change UI to show that satellite's stats.
 
     updateOrbitLine(simulationTime, orbitMins) {
         const points = [];
-        for (let i = 0; i < orbitMins; i++) {
-            const time = new Date(simulationTime + i * 30 * 1000);
+        const stepSeconds = 30; // each prediction sample is spaced 30 seconds apart
+        const totalSteps = (orbitMins * 60) / stepSeconds; // total number of prediction samples/steps needed to cover orbit prediction duration set by user.
+        for (let i = 0; i < totalSteps; i++) {
+            const time = new Date(simulationTime + i * stepSeconds * 1000);
             const pos = satellite.propagate(this.satrec, time);
             
             if (!pos.position) continue;

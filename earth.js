@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getFresnelMat } from './getFresnalMat.js';
+import { getFresnelMat } from './getFresnelMat.js';
 
 export class Earth {
     constructor() {
@@ -35,17 +35,17 @@ export class Earth {
         this.earthCloudMesh.scale.setScalar(1.003);
         this.group.add(this.earthCloudMesh);
 
-        // Fresnal Shader for glow around earth
-        const fresnalMat = getFresnelMat();
-        this.fresnalMesh = new THREE.Mesh(geometry, fresnalMat);
-        this.fresnalMesh.scale.setScalar(1.02);
-        this.group.add(this.fresnalMesh);
+        // Fresnel Shader for glow around earth
+        const fresnelMat = getFresnelMat();
+        this.fresnelMesh = new THREE.Mesh(geometry, fresnelMat);
+        this.fresnelMesh.scale.setScalar(1.02);
+        this.group.add(this.fresnelMesh);
     }
 
     update(time) {
         this.sphereMesh.rotation.y = time / 8000;
         this.earthLightsMesh.rotation.y = time / 8000;
         this.earthCloudMesh.rotation.y = time / 4000;
-        this.fresnalMesh.rotation.y = time / 4000;
+        this.fresnelMesh.rotation.y = time / 4000;
     }
 }

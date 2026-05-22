@@ -1,3 +1,7 @@
+import { Environment } from "./Environment";
+import { SatelliteTracker } from "./SatelliteTracker";
+import { getSatellites } from "./satellitemanager";
+
 export class UIManager {
     constructor(onOrbitChangeCallback) {
         this.input = document.querySelector("#orbitMins");
@@ -17,7 +21,7 @@ export class UIManager {
             if(onOrbitChangeCallback) onOrbitChangeCallback(this.orbitMins);
         });
     }
-
+    
     getOrbitMins() {
         return this.orbitMins;
     }

@@ -7,16 +7,16 @@ export class Environment {
         
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.z = 8;
-
+        // Renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
         document.body.appendChild(this.renderer.domElement);
-        // orbit controls to move camera
+        // Orbit controls to move camera
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.update();
-        
+        // Lighting
         const sunLighting = new THREE.DirectionalLight(0xffffff, 2);
         sunLighting.position.set(-2, 0.5, 2);
         this.scene.add(sunLighting);
