@@ -10,7 +10,7 @@ export class Earth {
         const geometry = new THREE.IcosahedronGeometry(1, 12);
 
         // Base Earth
-        const texture = loader.load('images/earthmap1k.jpg');
+        const texture = loader.load('./images/earthmap1k.jpg');
         texture.colorSpace = THREE.SRGBColorSpace;
         const material = new THREE.MeshStandardMaterial({ map: texture });
         this.sphereMesh = new THREE.Mesh(geometry, material);
