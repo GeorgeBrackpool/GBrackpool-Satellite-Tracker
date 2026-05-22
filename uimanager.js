@@ -1,5 +1,5 @@
-import { Environment } from "./Environment";
-import { SatelliteTracker } from "./SatelliteTracker";
+import { Environment } from "./environment";
+import { SatelliteTracker } from "./satellitetracker";
 import { getSatellites } from "./satellitemanager";
 
 export class UIManager {

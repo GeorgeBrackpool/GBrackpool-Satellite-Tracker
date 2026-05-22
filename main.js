@@ -1,9 +1,9 @@
-import { Environment } from './Environment.js';
-import { Earth } from './Earth.js';
-import { Starfield } from './Starfield.js';
-import { SatelliteTracker } from './SatelliteTracker.js';
+import { Environment } from './environment.js';
+import { Earth } from './earth.js';
+import { Starfield } from './starfield.js';
+import { SatelliteTracker } from './satellitetracker.js';
 import { addSatellite, getSatellites} from './satellitemanager.js';
-import { UIManager } from './UIManager.js';
+import { UIManager } from './uimanager.js';
 import { Raycaster, Scene, Vector2 } from "three";
 
 // setup threejs env.
