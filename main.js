@@ -72,7 +72,6 @@ const raycastPointer = new Raycaster();
 document.addEventListener('mousedown', onMouseDown);
     function onMouseDown(event)
     {
-        console.log("clicked", event);
         const coords = new Vector2(
         (event.clientX / env.renderer.domElement.clientWidth) * 2 - 1,
             -((event.clientY / env.renderer.domElement.clientHeight) * 2 - 1),);
@@ -82,21 +81,19 @@ document.addEventListener('mousedown', onMouseDown);
         if(intersections.length > 0)
             {
                 const clickedSatellite = intersections[0].object.userData.satellite;
-                // Hides previous orbit line
-                if (selectedSatellite)
+                // Hides previous orbit lines
+                for (const sat of getSatellites())
                 {
-                    selectedSatellite.orbitLine.visible = false;
+                    sat.orbitLine.visible = false;
                 }
                 // change the selected sat that's been clicked on
                 selectedSatellite = clickedSatellite;
                 // show new orbit line for selected sat
                 selectedSatellite.orbitLine.visible = true;
-                // Update orbit immediately after selection
+                // Update orbit line immediately after selection
                 selectedSatellite.updateOrbitLine(simulationTime, ui.getOrbitMins());
                 // Update frontend UI.
                 ui.setStaticInfo(selectedSatellite.name, selectedSatellite.id);
-                console.log(intersections);
-                console.log(intersections[0].object.userData);
             }
     }
 
