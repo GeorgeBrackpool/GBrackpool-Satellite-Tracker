@@ -14,9 +14,15 @@ export class SatelliteTracker {
         const satGeometry = new THREE.SphereGeometry(0.10, 16, 8);
         const satMaterial = new THREE.MeshBasicMaterial({ color: color });
         this.mesh = new THREE.Mesh(satGeometry, satMaterial);
-        
-        // User data for clicking on sat mesh.
-        this.mesh.userData = { satellite: this };
+
+        // Invisible hitbox for the sat mesh. This is to improve usability by making a larger area to click on especially for mobile. 
+        const hitboxGeometry = new THREE.SphereGeometry(0.5,8,8)
+        const hitboxMaterial = new THREE.MeshBasicMaterial({
+                transparent: true,
+                opacity: 0
+            });
+        this.hitbox = new THREE.Mesh(hitboxGeometry, hitboxMaterial);
+        this.hitbox.userData = { satellite: this };
 
         // Orbit Line
         const orbitGeometry = new THREE.BufferGeometry();
@@ -68,6 +74,11 @@ export class SatelliteTracker {
                 radius * Math.cos(lat) * Math.cos(lon),
                 radius * Math.sin(lat),
                 radius * Math.cos(lat) * Math.sin(lon)
+            );
+
+            this.hitbox.position.copy
+            (
+                this.mesh.position
             );
 
             // Return calculated data so the UI can display it

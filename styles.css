@@ -12,6 +12,8 @@ body
     position: absolute;
     top: 10px;
     width: 100%;
+    margin-left: auto;
+    margin-right: auto;
     text-align: center;
     z-index: 100;
     display: block;
@@ -31,15 +33,24 @@ body
     font-style: normal;
 }
 
+#orbitMins
+{
+    width: 100%;
+}
 
-/* https: //www.geeksforgeeks.org/css/how-to-create-glassmorphism-effect/ */
+#sat-title
+{
+    place-items: center;
+}
+
  .card {
     z-index: 100;
      position: absolute;
-     height: 40%;
-     left: 2%;
-     top: 55%;
-     width: 30%;
+     left: 20px;
+     bottom: 20px;
+     width: 320px;
+     max-width: 90vw;
+     padding: 1rem;
      border: 1px solid rgba(255, 255, 255, 0.18);
      background: rgba(89, 131, 83, 0.09);
      -webkit-backdrop-filter: blur(2px); /* iOS support */
@@ -47,7 +58,36 @@ body
      border-radius: 1em;
      display: flex;
      flex-direction: column;
-     align-items: center;
-     justify-content: flex-start;
+
+     gap: 1rem;
      color: white;
+ }
+
+ @media (max-width: 768px)
+ {
+    .card{
+
+        left: 50%;
+        bottom: 10px;
+
+        transform: translateX(-50%);
+
+        width: 90vw;
+
+        max-width: 420px;
+
+        padding: 0.75rem;
+
+        gap: 0.5rem;
+
+        font-size: 0.85rem;
+    }
+        .card h1,
+        .card h2 {
+            font-size: 1rem;
+        }
+    
+        #orbitMins {
+            height: 30px;
+        }
  }

@@ -38,13 +38,18 @@ addSatellite(satTracker);
 addSatellite(issTracker);
 addSatellite(hstTracker);
 
-// Add mesh and orbit lines for the satellites to the scene.
+// Add mesh, hitbox and orbit lines for the satellites to the scene.
 env.scene.add(satTracker.mesh);
 env.scene.add(satTracker.orbitLine);
+env.scene.add(satTracker.hitbox);
 env.scene.add(issTracker.mesh);
 env.scene.add(issTracker.orbitLine);
+env.scene.add(issTracker.hitbox);
 env.scene.add(hstTracker.mesh);
 env.scene.add(hstTracker.orbitLine);
+env.scene.add(hstTracker.hitbox);
+
+
 
 
 // Setup of simulation time variables
@@ -76,8 +81,8 @@ document.addEventListener('mousedown', onMouseDown);
         (event.clientX / env.renderer.domElement.clientWidth) * 2 - 1,
             -((event.clientY / env.renderer.domElement.clientHeight) * 2 - 1),);
         raycastPointer.setFromCamera(coords, env.camera);
-        const satMeshes = getSatellites().map(sat => sat.mesh);
-        const intersections = raycastPointer.intersectObjects(satMeshes ,true);
+        const satHitboxes= getSatellites().map(sat => sat.hitbox);
+        const intersections = raycastPointer.intersectObjects(satHitboxes ,true);
         if(intersections.length > 0)
             {
                 const clickedSatellite = intersections[0].object.userData.satellite;
@@ -108,8 +113,8 @@ function animate(time) {
     earth.update(time);
     starfield.update();
 
-    // Refreshes orbit prediction every 2 seconds to save performance
-    if (orbitRefreshTimer > 2000) {
+    // Refreshes orbit prediction every x seconds to save performance. For now I'm setting this as a low value e.g 10. If more satellites are added in future then adjust this accordingly.
+    if (orbitRefreshTimer > 10) {
         if(selectedSatellite)
         {
             selectedSatellite.updateOrbitLine(simulationTime, ui.getOrbitMins());

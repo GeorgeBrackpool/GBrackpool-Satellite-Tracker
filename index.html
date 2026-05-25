@@ -12,19 +12,21 @@
 <body>
     <div id="info">GBrackpool's Satellite Tracker</div>
     <div class="card">
+        <div id="sat-title">
         <h2>Satellite Data</h2>
         <p id="sat-name"></p>
         <p id="sat-num"> </p>
+        </div>
         <div>
             <input type="range" id="orbitMins" name="orbitPath" min="93" max="3000" value="93" />
-            <label for="orbitMins">Orbit Time (Minutes)</label>
-            <span id="orbitValue"> 90</span>
+            <label for="orbitMins">Orbit Time (Minutes) -</label>
+            <span id="orbitValue"> 93</span>
+        </div>
             <div id="sat-position">
                 <p>Latitude:</p>
                 <p>Longtitude:</p>
                 <p>Height:</p>
             </div>
-        </div>
         <p>Click on a satellite sphere to view it's information.</p>
     </div>
     <script type="module" src="/main.js"></script>
