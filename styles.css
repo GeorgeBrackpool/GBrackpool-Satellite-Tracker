@@ -37,6 +37,10 @@ body
 {
     width: 100%;
 }
+#sim-speed
+{
+    width: 100%;
+}
 
 #sat-title
 {
@@ -88,6 +92,9 @@ body
         }
     
         #orbitMins {
+            height: 30px;
+        }
+        #sim-speed {
             height: 30px;
         }
  }

@@ -62,7 +62,12 @@ let orbitRefreshTimer = 0;
 const ui = new UIManager((newOrbitMins) => {
     // When the user moves the slider, redraw the line
     satTracker.updateOrbitLine(simulationTime, newOrbitMins);
-});
+},
+      (speed) => {
+        timeScale = speed;
+    }
+);
+
 ui.setStaticInfo(satTracker.name, satTracker.id);
 let selectedSatellite = satTracker; // selected sat for raycast.
 

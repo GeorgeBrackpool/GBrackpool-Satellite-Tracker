@@ -3,9 +3,11 @@ import { SatelliteTracker } from "./satellitetracker";
 import { getSatellites } from "./satellitemanager";
 
 export class UIManager {
-    constructor(onOrbitChangeCallback) {
-        this.input = document.querySelector("#orbitMins");
-        this.valueUI = document.querySelector("#orbitValue");
+    constructor(onOrbitChangeCallback, onSpeedChangeCallback) {
+        this.input = document.getElementById("orbitMins");
+        this.valueUI = document.getElementById("orbitValue");
+        this.simSpeedSlider = document.getElementById("sim-speed");
+        this.simUI = document.getElementById("speedValue");
         this.satPositionUI = document.getElementById("sat-position");
         this.satNameUI = document.getElementById("sat-name");
         this.satNumUI = document.getElementById("sat-num");
@@ -19,6 +21,17 @@ export class UIManager {
             this.valueUI.textContent = this.orbitMins;
             // Ping main.js to update the 3D line when slider changes
             if(onOrbitChangeCallback) onOrbitChangeCallback(this.orbitMins);
+        });
+
+        this.simSpeedSlider.addEventListener("input", (e) => {
+
+        const speed = parseInt(e.target.value);
+
+        this.simUI.textContent = speed;
+
+        if (onSpeedChangeCallback) {
+            onSpeedChangeCallback(speed);
+        }
         });
     }
     
